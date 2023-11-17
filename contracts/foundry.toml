@@ -1,0 +1,15 @@
+# See more config options https://book.getfoundry.sh/reference/config/overview?highlight=config#config-overview
+
+# Note: don't explicitly set the `solc` version here, as there are multiple solc versions used in the project
+
+[profile.default]
+auto_detect_solc = true
+src = "contracts"
+test = "forge-tests"
+out = "forge-artifacts"
+script = "forge-scripts"
+libs = ["node_modules", "lib"]
+gas_reports = ["*"]
+fs_permissions = [{ access = "read", path = "./forge-artifacts"}]
+optimizer = true
+optimizer_runs = 20000

@@ -1,0 +1,8 @@
+ds-test/=lib/forge-std/lib/ds-test/src/
+forge-tests/=forge-tests
+forge-std/=lib/forge-std/src/
+
+@chainlink/=lib/chainlink-brownie-contracts/contracts/src/v0.8/
+@openzeppelin/=lib/openzeppelin-contracts/contracts/
+
+eth-gas-reporter/=node_modules/eth-gas-reporter/
