@@ -40,8 +40,38 @@ abi:
 
 anvil :; anvil --fork-url ${FORK_URL} -m 'test test test test test test test test test test test junk'
 
-deploy-base-goerli-nft :; @forge script forge-scripts/NFT.s.sol:DeployNFT --optimize --rpc-url $(BASE_TESTNET_RPC) --private-key $(DEPLOYER_PRIVATE_KEY) --broadcast --slow --legacy --with-gas-price 1000000000 -vvvv
-deploy-base-goerli-wordlist :; @forge script forge-scripts/WordList.s.sol:DeployWordList --optimize --rpc-url $(BASE_TESTNET_RPC) --private-key $(DEPLOYER_PRIVATE_KEY) --broadcast --slow --legacy --with-gas-price 1000000000 -vvvv
+deploy-base-goerli-nft:
+	@forge script forge-scripts/NFT.s.sol:DeployNFT \
+	--optimize \
+	--rpc-url $(BASE_TESTNET_RPC) \
+	--private-key $(DEPLOYER_PRIVATE_KEY) \
+	--broadcast \
+	--slow \
+	--legacy \
+	--with-gas-price 1000000000 \
+	-vvvv
+
+deploy-base-goerli-wordlist:
+	@forge script forge-scripts/WordList.s.sol:DeployWordList \
+	--optimize \
+	--rpc-url $(BASE_TESTNET_RPC) \
+	--private-key $(DEPLOYER_PRIVATE_KEY) \
+	--broadcast \
+	--slow \
+	--legacy \
+	--with-gas-price 1000000000 \
+	-vvvv
+
+deploy-eth-sepolia-smarttreasury:
+	@forge script forge-scripts/SmartTreasury.s.sol:DeploySmartTreasury \
+	--optimize \
+	--rpc-url $(ETHEREUM_SEPOLIA_RPC) \
+	--private-key $(DEPLOYER_PRIVATE_KEY) \
+	--broadcast \
+	--slow \
+	--legacy \
+	--with-gas-price 1200000000 \
+	-vvvv
 
 # Note: Run these commands in CLI, for some reason $(cast abi-encde ...) breaks the verify-contract command
 verify-base-goerli-nft:
@@ -60,3 +90,12 @@ verify-base-goerli-wordlist:
 	--watch \
 	0x5ff0e42Ec998aA787561111F112917d7Ae4a64Cb \
 	contracts/WordList/WordList.sol:WordList
+
+verify-eth-sepolia-smarttreasury:
+	forge verify-contract \
+	--chain sepolia \
+	--etherscan-api-key ${ETHERSCAN_API_KEY} \
+	--watch \
+	--constructor-args $(cast abi-encode "constructor(address, bytes32)" "0xb83E47C2bC239B3bf370bc41e1459A34b41238D0" "0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000") \
+	0x6837Cbcd4ff0bCF18222C4090e0536Db6E4909Cd \
+	contracts/SmartTreasury.sol:SmartTreasury

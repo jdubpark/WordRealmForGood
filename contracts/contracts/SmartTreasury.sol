@@ -15,6 +15,7 @@ import {ISmartTreasury} from "./interfaces/ISmartTreasury.sol";
 // import {Ownable} from "@openzeppelin/access/Ownable.sol";
 
 contract SmartTreasury is
+    ISmartTreasury,
     FunctionsClient,
     ConfirmedOwner,
     AutomationCompatibleInterface
@@ -100,6 +101,8 @@ contract SmartTreasury is
     ) private {
         isReleaseTriggered = uint256(bytes32(response)) == 1;
         emit WeatherInfoReceived(requestId, isReleaseTriggered);
+
+        if (isReleaseTriggered) triggerFundReleaseRequest();
     }
 
     ///
@@ -113,6 +116,8 @@ contract SmartTreasury is
             (block.timestamp - s_lastUpkeepTimeStamp) > s_updateInterval;
     }
 
+    /// Anyone can call this function, but primarily it's Chainlink Automation
+    /// calling it in interval.
     function performUpkeep(bytes calldata) external override {
         (bool upkeepNeeded, ) = checkUpkeep("");
         require(upkeepNeeded, "Time interval not met");
@@ -174,15 +179,15 @@ contract SmartTreasury is
     /// Storage getters/setters
     ///
 
-    function getUrl() public view returns (string memory) {
-        return
-            string.concat(
-                "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=",
-                latitude,
-                "&lon=",
-                longitude
-            );
-    }
+    // function getUrl() public view returns (string memory) {
+    //     return
+    //         string.concat(
+    //             "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=",
+    //             latitude,
+    //             "&lon=",
+    //             longitude
+    //         );
+    // }
 
     /**
    * @notice Sets the bytes representing the CBOR-encoded FunctionsRequest.Request that is sent when performUpkeep is called
@@ -226,5 +231,9 @@ contract SmartTreasury is
 
     function setDonId(bytes32 newDonId) external onlyOwner {
         s_donId = newDonId;
+    }
+
+    function setFundTokens(address[] memory _fundTokens) external onlyOwner {
+        fundTokens = _fundTokens;
     }
 }
