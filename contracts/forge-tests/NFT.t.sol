@@ -45,11 +45,12 @@ contract NFTTest is BaseSetup {
 
         vm.startPrank(alice);
 
-        nft.mint{value: 0.1 ether}();
-        uint256 tokenId = 0;
+        nft.mint{value: 0.1 ether}("ipfs://url/image");
 
-        string[] memory words = nft.getMappedWords(tokenId);
+        string[] memory words = nft.getWords(address(alice));
 
         assertEq(words.length, wordList.readWordsize());
+
+        vm.stopPrank();
     }
 }
