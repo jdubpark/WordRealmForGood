@@ -28,8 +28,14 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     // token ID => bool (has fulfilled or not)
     mapping(uint256 => bool) public fulfilledDraws;
 
-    // token ID => word list
-    mapping(uint256 => string[]) private mappedWords;
+    // user Address => word list
+    mapping(uint256 => string[]) private mintedWords;
+
+    // user Address => bool
+    mapping(uint256 => bool) private canMintWords;
+
+    // token ID => sentence
+    mapping(uint256 => string) private mintedSentence;
 
     ///
     /// CCIP variables
@@ -65,16 +71,23 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         WETH.approve(_ccipRouter, type(uint256).max);
     }
 
-    function mint() public payable {
+    function getWords() public {
+        require(!canMintWords[msg.sender], "NFT: Aalready minted words");
+
+        (string[] memory words, ) = wordList.requestWordsFromBank();
+        mintedWords[msg.sender] = words;
+    }
+
+    function mint(string memory _tokenURI) public payable {
         require(msg.value >= mintCost, "NFT: Mint cost not met");
 
         // mint a new NFT with (pseudo-random) words from the bank
         _mint(msg.sender, tokenIdCounter);
-
-        (string[] memory words, ) = wordList.requestWordsFromBank();
-        mappedWords[tokenIdCounter] = words;
+        _setTokenURI(_tokenId, _tokenURI);
 
         ++tokenIdCounter;
+
+        canMintWords[msg.sender] = false;
     }
 
     function combine(uint256[] memory tokenIds) public {
@@ -115,25 +128,6 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         }
 
         mappedWords[tokenIdCounter] = words;
-    }
-
-    function fulfillMint(
-        address requester,
-        uint256 tokenId,
-        string[] memory randomWords
-    ) public {
-        require(msg.sender == address(wordList), "NFT: Only WordList");
-        // leave this function as a dummy function for now.
-    }
-
-    function fulfillDraw(
-        uint256 _tokenId,
-        string memory _tokenURI
-    ) external onlyOwner {
-        require(!fulfilledDraws[_tokenId], "NFT: already fulfilled");
-
-        fulfilledDraws[_tokenId] = true;
-        _setTokenURI(_tokenId, _tokenURI);
     }
 
     function setConnectedWordList(address _wordList) external onlyOwner {
