@@ -111,11 +111,12 @@ contract WordListVRFAPI3 is IWordListVRF, WordListBase, VRFConsumerBaseV2 {
         // wordbank[randomIndex] = wordbank[wordbank.length - 1];
         // wordbank.pop();
 
-        INFT(connectedNFT).fulfillMint(
-            vrfRequests[_requestId].requester,
-            vrfRequests[_requestId].tokenId,
-            words
-        );
+        revert("fulfillmint not in");
+        // INFT(connectedNFT).fulfillMint(
+        //     vrfRequests[_requestId].requester,
+        //     vrfRequests[_requestId].tokenId,
+        //     words
+        // );
 
         emit RequestFulfilled(_requestId, words);
     }
