@@ -47,10 +47,14 @@ contract BaseSetup is Test {
         if (block.chainid == 84531) {
             // Base Goerli
             WETH = IWETH(0x4200000000000000000000000000000000000006);
-            LINK = LinkTokenInterface(0xD886E2286Fd1073df82462ea1822119600Af80b6);
+            LINK = LinkTokenInterface(
+                0xD886E2286Fd1073df82462ea1822119600Af80b6
+            );
             CCIP_BnM = IERC20(0xbf9036529123DE264bFA0FC7362fE25B650D4B16);
 
-            ccipRouter = IRouterClient(0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D);
+            ccipRouter = IRouterClient(
+                0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D
+            );
         } else {
             console2.log("BaseSetup: chain id %d", block.chainid);
             revert("BaseSetup: unsupported chain ID");
