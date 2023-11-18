@@ -1,21 +1,34 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import {AutomationCompatibleInterface} from "@chainlink/automation/AutomationCompatible.sol";
+import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 import {FunctionsClient} from "@chainlink/functions/dev/v1_0_0/FunctionsClient.sol";
 import {FunctionsRequest} from "@chainlink/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 import {ConfirmedOwner} from "@chainlink/shared/access/ConfirmedOwner.sol";
 import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
-import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {ISmartTreasury} from "./interfaces/ISmartTreasury.sol";
 
 // import {Ownable} from "@openzeppelin/access/Ownable.sol";
 
-contract SmartTreasury is FunctionsClient, ConfirmedOwner {
+contract SmartTreasury is
+    FunctionsClient,
+    ConfirmedOwner,
+    AutomationCompatibleInterface
+{
     using FunctionsRequest for FunctionsRequest.Request;
 
     error UnexpectedRequestID(bytes32 requestId);
     event OCRResponse(bytes32 indexed requestId, bytes result, bytes err);
+
+    event WeatherInfoReceived(
+        bytes32 indexed requestId,
+        bool triggerFundRelease
+    );
+    event RequestFailed(bytes error);
 
     string public latitude = "41.008240";
     string public longitude = "28.978359";
@@ -37,7 +50,7 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
     uint256 public s_lastUpkeepTimeStamp;
     uint256 public s_upkeepCounter;
     uint256 public s_responseCounter;
-    uint256 public s_lastRequestId;
+    bytes32 public s_lastRequestId;
 
     // Chainlink Functions script soruce code
     string private constant CHAINLINK_FUNCTIONS_SOURCE =
@@ -52,16 +65,13 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
         s_lastUpkeepTimeStamp = 0;
     }
 
-    function evaluateWeather(
-        uint64 subscriptionId
-    ) external returns (bytes32 assignedReqID) {
-        string[] memory args = new string[](4);
+    function evaluateWeather() public returns (bytes32 requestId) {
+        string[] memory args = new string[](3);
         args[0] = latitude;
         args[1] = longitude;
-        args[2] = minWindThreshold;
-        req.addArgs(args);
+        args[2] = Strings.toString(minWindThreshold);
 
-        assignedReqID = _sendRequest(req, subscriptionId, 150_000);
+        requestId = _sendRequest(args);
     }
 
     // For now, it's directly released without intermediary verification step.
@@ -88,8 +98,8 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
         bytes32 requestId,
         bytes memory response
     ) private {
-        isReleaseTriggered = uint256(response) == 1;
-        emit WeatherTriggered(requestId, isReleaseTriggered);
+        isReleaseTriggered = uint256(bytes32(response)) == 1;
+        emit WeatherInfoReceived(requestId, isReleaseTriggered);
     }
 
     ///
@@ -109,13 +119,7 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
         s_lastUpkeepTimeStamp = block.timestamp;
         s_upkeepCounter = s_upkeepCounter + 1;
 
-        bytes32 requestId = _sendRequest(
-            s_requestCBOR,
-            s_subscriptionId,
-            s_fulfillGasLimit,
-            s_donId
-        );
-        s_lastRequestId = requestId;
+        s_lastRequestId = evaluateWeather();
     }
 
     ///
@@ -133,7 +137,7 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
         req.initializeRequest(
             FunctionsRequest.Location.Inline,
             FunctionsRequest.CodeLanguage.JavaScript,
-            SOURCE
+            CHAINLINK_FUNCTIONS_SOURCE
         );
 
         if (args.length > 0) req.setArgs(args);
@@ -186,21 +190,18 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
    * @param _subscriptionId The Functions billing subscription ID used to pay for Functions requests
    * @param _fulfillGasLimit Maximum amount of gas used to call the client contract's `handleOracleFulfillment` function
    * @param _updateInterval Time interval at which Chainlink Automation should call performUpkeep
-   * @param requestCBOR Bytes representing the CBOR-encoded FunctionsRequest.Request
    */
     function setConfig(
         uint64 _subscriptionId,
         uint32 _fulfillGasLimit,
         uint256 _updateInterval,
-        bytes calldata requestCBOR,
-        uint256 _fundReleaseRecipient
+        address _fundReleaseRecipient
     ) external onlyOwner {
         require(_fundReleaseRecipient != address(0), "a0");
 
         s_updateInterval = _updateInterval;
         s_subscriptionId = _subscriptionId;
         s_fulfillGasLimit = _fulfillGasLimit;
-        s_requestCBOR = requestCBOR;
 
         fundReleaseRecipient = _fundReleaseRecipient;
     }
@@ -224,6 +225,6 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
     }
 
     function setDonId(bytes32 newDonId) external onlyOwner {
-        donId = newDonId;
+        s_donId = newDonId;
     }
 }
