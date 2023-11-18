@@ -3,6 +3,8 @@ pragma solidity >=0.8.0;
 
 import "forge-std/Test.sol";
 
+import {LinkTokenInterface} from "@chainlink/interfaces/LinkTokenInterface.sol";
+import {IRouterClient} from "@chainlink-ccip/ccip/interfaces/IRouterClient.sol";
 import {IERC20} from "@openzeppelin/token/ERC20/IERC20.sol";
 
 import {Util} from "./Util.sol";
@@ -15,7 +17,10 @@ contract BaseSetup is Test {
     Util internal util;
 
     IWETH internal WETH;
-    IERC20 internal LINK;
+    LinkTokenInterface internal LINK;
+    IERC20 internal CCIP_BnM;
+
+    IRouterClient internal ccipRouter;
 
     address payable[] internal users;
     address internal alice;
@@ -35,15 +40,17 @@ contract BaseSetup is Test {
 
         vm.label(address(WETH), "WETH");
         vm.label(address(LINK), "LINK");
+        vm.label(address(CCIP_BnM), "CCIP_BnM");
     }
 
     function loadAddresses() public {
-        if (block.chainid == 421613) {
-            // Arbitrum Goerli
-            // https://goerli.arbiscan.io/token/0xee01c0cd76354c383b8c7b4e65ea88d00b06f36f
-            WETH = IWETH(0xEe01c0CD76354C383B8c7B4e65EA88D00B06f36f);
-            // https://sepolia.etherscan.io/token/0xd14838A68E8AFBAdE5efb411d5871ea0011AFd28
-            LINK = IERC20(0xd14838A68E8AFBAdE5efb411d5871ea0011AFd28);
+        if (block.chainid == 84531) {
+            // Base Goerli
+            WETH = IWETH(0x4200000000000000000000000000000000000006);
+            LINK = LinkTokenInterface(0xD886E2286Fd1073df82462ea1822119600Af80b6);
+            CCIP_BnM = IERC20(0xbf9036529123DE264bFA0FC7362fE25B650D4B16);
+
+            ccipRouter = IRouterClient(0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D);
         } else {
             console2.log("BaseSetup: chain id %d", block.chainid);
             revert("BaseSetup: unsupported chain ID");
