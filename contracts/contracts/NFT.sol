@@ -29,13 +29,13 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     mapping(uint256 => bool) public fulfilledDraws;
 
     // user Address => word list
-    mapping(uint256 => string[]) private mintedWords;
+    mapping(address => string[]) private mintedWords;
 
     // user Address => bool
-    mapping(uint256 => bool) private canMintWords;
+    mapping(address => bool) private canMintWords;
 
     // token ID => sentence
-    mapping(uint256 => string) private mintedSentence;
+    mapping(uint256 => string) private mintedSentences;
 
     ///
     /// CCIP variables
@@ -71,7 +71,7 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         WETH.approve(_ccipRouter, type(uint256).max);
     }
 
-    function getWords() public {
+    function mintWords() public {
         require(!canMintWords[msg.sender], "NFT: Aalready minted words");
 
         (string[] memory words, ) = wordList.requestWordsFromBank();
@@ -83,7 +83,7 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
         // mint a new NFT with (pseudo-random) words from the bank
         _mint(msg.sender, tokenIdCounter);
-        _setTokenURI(_tokenId, _tokenURI);
+        _setTokenURI(tokenIdCounter, _tokenURI);
 
         ++tokenIdCounter;
 
@@ -94,55 +94,26 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         // combine multiple NFTs into one
         ++tokenIdCounter;
 
-        uint256 len = 0;
+        string memory sentence = "";
         for (uint256 i = 0; i < tokenIds.length; ) {
             require(
                 ownerOf(tokenIds[i]) == msg.sender,
                 "NFT: Only owner can combine"
             );
 
-            len += mappedWords[tokenIds[i]].length;
+            string memory _sentence = mintedSentences[tokenIds[i]];
+
+            // Concat sentences
+            sentence = string(abi.encode(sentence, _sentence));
+
+            _burn(tokenIds[i]);
 
             unchecked {
                 ++i;
             }
         }
 
-        string[] memory words = new string[](len);
-        for (uint256 i = 0; i < tokenIds.length; ) {
-            string[] memory _words = mappedWords[tokenIds[i]];
-
-            for (uint256 j = 0; j < _words.length; ) {
-                words[i + j] = _words[j];
-
-                unchecked {
-                    ++j;
-                }
-            }
-
-            _burn(tokenIds[i]);
-
-            unchecked {
-                i += _words.length;
-            }
-        }
-
-        mappedWords[tokenIdCounter] = words;
-    }
-
-    function setConnectedWordList(address _wordList) external onlyOwner {
-        require(
-            _wordList != address(0),
-            "NFT: Connected WordList cannot be 0x0"
-        );
-
-        wordList = IWordList(_wordList);
-    }
-
-    function getMappedWords(
-        uint256 tokenId
-    ) external view returns (string[] memory) {
-        return mappedWords[tokenId];
+        mintedSentences[tokenIdCounter] = sentence;
     }
 
     ///
@@ -188,14 +159,34 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     }
 
     ///
-    /// Storage setters
+    /// Storage getters/setters
     ///
+
     function setMintCost(uint256 _mintCost) external onlyOwner {
         mintCost = _mintCost;
     }
 
     function setTreasuryAddressOnMainnet(address _treasury) external onlyOwner {
         treasuryAddressOnMainnet = _treasury;
+    }
+
+    function setConnectedWordList(address _wordList) external onlyOwner {
+        require(
+            _wordList != address(0),
+            "NFT: Connected WordList cannot be 0x0"
+        );
+
+        wordList = IWordList(_wordList);
+    }
+
+    function getSentence(
+        uint256 tokenId
+    ) external view returns (string memory) {
+        return mintedSentences[tokenId];
+    }
+
+    function getWords(address user) external view returns (string[] memory) {
+        return mintedWords[user];
     }
 
     ///
