@@ -19,6 +19,8 @@ interface INFT {
 
     function sendTreasuryToMainnet() external payable;
 
+    function sendTreasuryToMainnetBnM() external payable;
+
     ///
     /// Getters/Setters
     ///
@@ -38,7 +40,8 @@ interface INFT {
     ) external view returns (string[] memory words);
 
     function getCCIPMessage(
-        uint256 wethTransferAmount
+        address transferToken,
+        uint256 transferAmount
     ) external view returns (Client.EVM2AnyMessage memory message);
 
     function getCCIPFee(

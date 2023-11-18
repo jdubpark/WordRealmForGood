@@ -8,6 +8,12 @@ interface IWordListBase {
 
     function removeFromWordbank(uint256[] memory indices) external;
 
+    // Setters/Getters
+
+    function setConnectedNFT(address nft) external;
+
+    function setWordsize(uint256 _wordsize) external;
+
     function readWordbank() external view returns (string[] memory);
 
     function readWordsize() external view returns (uint256);

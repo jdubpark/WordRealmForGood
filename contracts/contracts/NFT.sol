@@ -8,6 +8,7 @@ import {Ownable} from "@openzeppelin/access/Ownable.sol";
 import {ERC721} from "@openzeppelin/token/ERC721/ERC721.sol";
 import {ERC721URIStorage} from "@openzeppelin/token/ERC721/extensions/ERC721URIStorage.sol";
 
+import {ICCIP_BnM} from "./interfaces/tokens/ICCIP_BnM.sol";
 import {IWETH} from "./interfaces/tokens/IWETH.sol";
 import {INFT} from "./interfaces/INFT.sol";
 import {IWordList} from "./interfaces/WordList/IWordList.sol";
@@ -31,9 +32,6 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     // user Address => word list
     mapping(address => string[]) private mintedWords;
 
-    // user Address => bool
-    mapping(address => bool) private canMintWords;
-
     // token ID => sentence
     mapping(uint256 => string) private mintedSentences;
 
@@ -43,6 +41,8 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
     IRouterClient public immutable ccipRouter;
     LinkTokenInterface public immutable LINK;
+
+    ICCIP_BnM public immutable CCIP_BnM;
 
     ///
     /// Misc. variables
@@ -56,7 +56,8 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         string memory _symbol,
         address _ccipRouter,
         address _linkToken,
-        address _wethToken
+        address _wethToken,
+        address _ccipBnMToken
     ) Ownable(msg.sender) ERC721(_name, _symbol) {
         // MAKE SURE TO CHANGE THE OPERATOR of WordList to this contract's address
         // by calling setConnectedNFT(address(this)) on WordList so this NFT can get
@@ -64,15 +65,17 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
         LINK = LinkTokenInterface(_linkToken);
         WETH = IWETH(_wethToken);
+        CCIP_BnM = ICCIP_BnM(_ccipBnMToken);
 
         ccipRouter = IRouterClient(_ccipRouter);
 
         LINK.approve(_ccipRouter, type(uint256).max);
         WETH.approve(_ccipRouter, type(uint256).max);
+        CCIP_BnM.approve(_ccipRouter, type(uint256).max);
     }
 
     function mintWords() public {
-        if (!canMintWords[msg.sender]) revert AlreadyMintedWords();
+        if (mintedWords[msg.sender].length > 0) revert AlreadyMintedWords();
 
         (string[] memory words, ) = wordList.requestWordsFromBank();
         mintedWords[msg.sender] = words;
@@ -80,7 +83,8 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
     function mint(string memory _tokenURI) public payable {
         if (msg.value < mintCost) revert MintCostNotMet();
-        if (canMintWords[msg.sender]) revert MustMintWordsBeforeMintNFT();
+        if (mintedWords[msg.sender].length == 0)
+            revert MustMintWordsBeforeMintNFT();
 
         // mint a new NFT with (pseudo-random) words from the bank
         _mint(msg.sender, tokenIdCounter);
@@ -88,8 +92,10 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
         ++tokenIdCounter;
 
-        canMintWords[msg.sender] = false;
         delete mintedWords[msg.sender];
+
+        // for CCIP test, drip 1 CCIP_BnM for every mint (as treasury)
+        CCIP_BnM.drip(address(this));
     }
 
     function combine(uint256[] memory tokenIds) public {
@@ -129,12 +135,32 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     ///
     /// CCIP
     ///
+    /// Note: When calling "sendTreasury...", make sure to send ETH along with it
+    //        to pay for CCIP gas cost. Get the fee by calling getCCIPFee(getCCIPMessage(...))
+
+    function sendTreasuryToMainnetBnM() external payable {
+        Client.EVM2AnyMessage memory message = getCCIPMessage(
+            address(CCIP_BnM),
+            CCIP_BnM.balanceOf(address(this))
+        );
+
+        uint256 fee = getCCIPFee(message);
+        require(msg.value >= fee, "NFT: Not enough fee for CCIP");
+
+        bytes32 messageId = ccipRouter.ccipSend{value: fee}(
+            destinationChainSelector,
+            message
+        );
+
+        emit MessageSent(messageId);
+    }
 
     function sendTreasuryToMainnet() external payable {
         // msg.value is for paying fee, don't deposit that
         WETH.deposit{value: address(this).balance - msg.value}();
 
         Client.EVM2AnyMessage memory message = getCCIPMessage(
+            address(WETH),
             WETH.balanceOf(address(this))
         );
 
@@ -187,14 +213,20 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     }
 
     function getCCIPMessage(
-        uint256 wethTransferAmount
+        address transferToken,
+        uint256 transferAmount
     ) public view returns (Client.EVM2AnyMessage memory message) {
+        require(
+            treasuryAddressOnMainnet != address(0),
+            "NFT: Treasury not set"
+        );
+
         Client.EVMTokenAmount[]
             memory tokenAmounts = new Client.EVMTokenAmount[](1);
 
         tokenAmounts[0] = Client.EVMTokenAmount({
-            token: address(WETH),
-            amount: wethTransferAmount
+            token: transferToken,
+            amount: transferAmount
         });
 
         message = Client.EVM2AnyMessage({
