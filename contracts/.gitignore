@@ -3,6 +3,8 @@ cache/
 out/
 forge-artifacts/
 
+node_modules/
+
 # Ignores development broadcast logs
 !/broadcast
 /broadcast/*/31337/

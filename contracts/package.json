@@ -6,6 +6,7 @@
   "license": "MIT",
   "dependencies": {
     "@certusone/wormhole-sdk": "^0.9.18",
+    "@chainlink/contracts-ccip": "^0.7.6",
     "ethers": "5"
   },
   "devDependencies": {

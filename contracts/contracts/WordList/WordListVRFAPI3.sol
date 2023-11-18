@@ -8,7 +8,7 @@ import {WordListBase} from "./Base.sol";
 import {INFT} from "../interfaces/INFT.sol";
 import {IWordListVRF} from "../interfaces/WordList/IWordListVRF.sol";
 
-contract WordListVRF is IWordListVRF, WordListBase, VRFConsumerBaseV2 {
+contract WordListVRFAPI3 is IWordListVRF, WordListBase, VRFConsumerBaseV2 {
     event RequestSent(uint256 requestId, uint32 numValues);
     event RequestFulfilled(uint256 requestId, string[] randomWords);
 

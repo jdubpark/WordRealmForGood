@@ -3,6 +3,8 @@ forge-tests/=forge-tests
 forge-std/=lib/forge-std/src/
 
 @chainlink/=lib/chainlink-brownie-contracts/contracts/src/v0.8/
+@chainlink-ccip/=node_modules/@chainlink/contracts-ccip/src/v0.8/
 @openzeppelin/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 
 eth-gas-reporter/=node_modules/eth-gas-reporter/
