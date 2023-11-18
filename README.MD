@@ -1,5 +1,6 @@
 # Pro-Active Public Goods Funding
-![Model](https://github.com/jdubpark/WordRealmForGood/tree/main)
+<img width="30px" src="https://github.com/jdubpark/WordRealmForGood/tree/main" alt="cover_image png" />
+
 
 Disaster relief funding pre-emptively distributed to local aid organizations before inclement weather strikes -- all funded by educational, generative NFT gaming.
 
