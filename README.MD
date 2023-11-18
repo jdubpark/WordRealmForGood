@@ -1,4 +1,6 @@
 # Pro-Active Public Goods Funding
+
+
 Disaster relief funding pre-emptively distributed to local aid organizations before inclement weather strikes -- all funded by educational, generative NFT gaming.
 
 ## Player Experience
