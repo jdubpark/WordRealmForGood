@@ -7,7 +7,7 @@ import {ConfirmedOwner} from "@chainlink/shared/access/ConfirmedOwner.sol";
 import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";
 
-import {ISmartTreasury} from "@chainlin/interfaces/ISmartTreasury.sol";
+import {ISmartTreasury} from "./interfaces/ISmartTreasury.sol";
 
 // import {Ownable} from "@openzeppelin/access/Ownable.sol";
 
@@ -30,7 +30,7 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
     // State variables for Chainlink Functions
     bytes32 public s_donId; // DON ID for the Functions DON to which the requests are sent
     uint64 private s_subscriptionId; // Subscription ID for the Chainlink Functions
-    uint32 private s_gasLimit; // Gas limit for the Chainlink Functions callbacks
+    uint32 private s_fulfillGasLimit; // Gas limit for the Chainlink Functions callbacks
 
     // State variables for Chainlink Automation
     uint256 public s_updateInterval;
@@ -142,7 +142,7 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
         requestId = _sendRequest(
             req.encodeCBOR(),
             s_subscriptionId,
-            s_gasLimit,
+            s_fulfillGasLimit,
             s_donId
         );
     }
@@ -192,7 +192,6 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
         uint64 _subscriptionId,
         uint32 _fulfillGasLimit,
         uint256 _updateInterval,
-        uint256 _fulfillGasLimit,
         bytes calldata requestCBOR,
         uint256 _fundReleaseRecipient
     ) external onlyOwner {
@@ -202,7 +201,6 @@ contract SmartTreasury is FunctionsClient, ConfirmedOwner {
         s_subscriptionId = _subscriptionId;
         s_fulfillGasLimit = _fulfillGasLimit;
         s_requestCBOR = requestCBOR;
-        s_gasLimit = _fulfillGasLimit;
 
         fundReleaseRecipient = _fundReleaseRecipient;
     }
