@@ -8,10 +8,18 @@ interface INFT {
     error AlreadyMintedWords();
     error MintCostNotMet();
     error MustMintWordsBeforeMintNFT();
+    error InvalidNullifier();
+
+    struct WorldcoinVerifiedAction {
+        address signal;
+        uint256 root;
+        uint256 nullifierHash;
+        uint256[8] proof;
+    }
 
     function mintWords() external;
 
-    function mint(string memory _tokenURI) external payable;
+    function mint(string memory _tokenURI, WorldcoinVerifiedAction calldata wva) external payable;
 
     ///
     /// CCIP

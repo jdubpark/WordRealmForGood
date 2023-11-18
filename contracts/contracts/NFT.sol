@@ -11,9 +11,13 @@ import {ERC721URIStorage} from "@openzeppelin/token/ERC721/extensions/ERC721URIS
 import {ICCIP_BnM} from "./interfaces/tokens/ICCIP_BnM.sol";
 import {IWETH} from "./interfaces/tokens/IWETH.sol";
 import {INFT} from "./interfaces/INFT.sol";
+import {IWorldID} from "./interfaces/IWorldID.sol";
 import {IWordList} from "./interfaces/WordList/IWordList.sol";
+import {ByteHasher} from "./libs/ByteHasher.sol";
 
 contract NFT is INFT, ERC721URIStorage, Ownable {
+    using ByteHasher for bytes;
+
     ///
     /// NFT variables
     ///
@@ -34,6 +38,21 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
     // token ID => sentence
     mapping(uint256 => string) private mintedSentences;
+
+    ///
+    /// Worldcoin variables
+    ///
+    /// @dev The World ID instance that will be used for verifying proofs
+    IWorldID internal immutable worldIdRouter;
+
+    /// @dev The contract's external nullifier hash
+    uint256 internal immutable externalNullifier;
+
+    /// @dev The World ID group ID (always 1)
+    uint256 internal immutable groupId = 1;
+
+    /// @dev Whether a nullifier hash has been used already. Used to guarantee an action is only performed once by a single person
+    mapping(uint256 => bool) internal nullifierHashes;
 
     ///
     /// CCIP variables
@@ -57,7 +76,10 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         address _ccipRouter,
         address _linkToken,
         address _wethToken,
-        address _ccipBnMToken
+        address _ccipBnMToken,
+        address _worldIdRouter,
+        string memory _worldcoinAppId,
+        string memory _worldcoinActionId
     ) Ownable(msg.sender) ERC721(_name, _symbol) {
         // MAKE SURE TO CHANGE THE OPERATOR of WordList to this contract's address
         // by calling setConnectedNFT(address(this)) on WordList so this NFT can get
@@ -68,6 +90,11 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         CCIP_BnM = ICCIP_BnM(_ccipBnMToken);
 
         ccipRouter = IRouterClient(_ccipRouter);
+
+        worldIdRouter = IWorldID(_worldIdRouter);
+        externalNullifier = abi
+            .encodePacked(abi.encodePacked(_worldcoinAppId).hashToField(), _worldcoinActionId)
+            .hashToField();
 
         LINK.approve(_ccipRouter, type(uint256).max);
         WETH.approve(_ccipRouter, type(uint256).max);
@@ -81,7 +108,12 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         mintedWords[msg.sender] = words;
     }
 
-    function mint(string memory _tokenURI) public payable {
+    function mint(
+        string memory _tokenURI,
+        WorldcoinVerifiedAction calldata wva
+    ) public payable {
+        verifyWithWorldcoin(wva);
+
         if (msg.value < mintCost) revert MintCostNotMet();
         if (mintedWords[msg.sender].length == 0)
             revert MustMintWordsBeforeMintNFT();
@@ -173,6 +205,31 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         );
 
         emit MessageSent(messageId);
+    }
+
+    ///
+    /// Worldcoin
+    ///
+
+    // the verification will revert if the data is incorrect
+    function verifyWithWorldcoin(WorldcoinVerifiedAction calldata wva) public {
+        address signal = wva.signal;
+        uint256 root = wva.root;
+        uint256 nullifierHash = wva.nullifierHash;
+        uint256[8] memory proof = wva.proof;
+
+        if (nullifierHashes[nullifierHash]) revert InvalidNullifier();
+
+        worldIdRouter.verifyProof(
+            root,
+            groupId,
+            abi.encodePacked(signal).hashToField(),
+            nullifierHash,
+            externalNullifier,
+            proof
+        );
+
+        nullifierHashes[nullifierHash] = true;
     }
 
     ///
