@@ -28,6 +28,35 @@ test :; forge test
 
 snapshot :; forge snapshot
 
-slither :; slither ./contracts 
+# Basic slither runs
+slither-nft :; slither ./contracts/NFT.sol --solc-remaps "@openzeppelin/=./lib/openzeppelin-contracts/contracts/ @openzeppelin/contracts/=./lib/openzeppelin-contracts/contracts/ @chainlink=./lib/chainlink-brownie-contracts/contracts/src/v0.8/ @chainlink-ccip=./node_modules/@chainlink/contracts-ccip/src/v0.8/"
+slither-wordlist :; slither ./contracts/WordList/WordList.sol --solc-remaps "@openzeppelin/=./lib/openzeppelin-contracts/contracts/ @openzeppelin/contracts/=./lib/openzeppelin-contracts/contracts/ @chainlink=./lib/chainlink-brownie-contracts/contracts/src/v0.8/ @chainlink-ccip=./node_modules/@chainlink/contracts-ccip/src/v0.8/"
 
 format :; prettier --write contracts/**/*.sol && prettier --write contracts/*.sol
+
+abi:
+	forge inspect contracts/NFT.sol:NFT abi > abi/NFT.json
+	forge inspect contracts/SmartTreasury.sol:SmartTreasury abi > abi/SmartTreasury.json
+
+anvil :; anvil --fork-url ${FORK_URL} -m 'test test test test test test test test test test test junk'
+
+deploy-base-goerli-nft :; @forge script forge-scripts/NFT.s.sol:DeployNFT --optimize --rpc-url $(BASE_TESTNET_RPC) --private-key $(DEPLOYER_PRIVATE_KEY) --broadcast --slow --legacy --with-gas-price 1000000000 -vvvv
+deploy-base-goerli-wordlist :; @forge script forge-scripts/WordList.s.sol:DeployWordList --optimize --rpc-url $(BASE_TESTNET_RPC) --private-key $(DEPLOYER_PRIVATE_KEY) --broadcast --slow --legacy --with-gas-price 1000000000 -vvvv
+
+# Note: Run these commands in CLI, for some reason $(cast abi-encde ...) breaks the verify-contract command
+verify-base-goerli-nft:
+	forge verify-contract \
+	--chain base-goerli \
+	--etherscan-api-key ${BASESCAN_API_KEY} \
+	--watch \
+	--constructor-args $(cast abi-encode "constructor(string, string, address, address, address, address)" "WordRealmPublicGood" "WordRPG" "0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D" "0xD886E2286Fd1073df82462ea1822119600Af80b6" "0x4200000000000000000000000000000000000006" "0xbf9036529123DE264bFA0FC7362fE25B650D4B16") \
+	0xAe6b0e9F687a149744B50d8875CC7911dde64410 \
+	contracts/NFT.sol:NFT
+
+verify-base-goerli-wordlist:
+	forge verify-contract \
+	--chain base-goerli \
+	--etherscan-api-key ${BASESCAN_API_KEY} \
+	--watch \
+	0x5ff0e42Ec998aA787561111F112917d7Ae4a64Cb \
+	contracts/WordList/WordList.sol:WordList
