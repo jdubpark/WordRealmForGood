@@ -2,10 +2,10 @@
 Disaster relief funding pre-emptively distributed to local aid organizations before inclement weather strikes -- all funded by educational, generative NFT gaming.
 
 ## Player Experience
-The player signs into the WordRealm with WorldCoin Sign In. Players select which region they would like to learn about and are then presented with a random selection of words organized into categories. Players then select words that teaches them about cultural elements from the local region -- the selected words are then used to generate an NFT that visualizes the chosen words. The player can choose to mint the NFT -- proceeds are then sent to a disaster relief contract on Base. Later on, the player can choose to sell the NFT -- proceeds from royalties are sent to the disaster relief contract on Base. 
+Player signs into the WordRealm with WorldCoin Sign In. Player selects which region they would like to learn about and are then presented with a random selection of words organized into three categories. API3 QRNG provides on-chain quantum randomness to the selection of words presented to the player from which to select. Player selects words that teaches her about cultural elements from the local region -- the selected words are then used to generate an NFT that visualizes the chosen words. The player can choose to mint the NFT -- proceeds are then sent to a disaster relief contract on Base. Later on, the player can choose to sell the NFT -- proceeds from royalties are sent to the disaster relief contract on Base Goerli. 
 
-## How It's Built
-We followed the Auth0 Integration to add Sign In with Worldcoin to WordRealm. Worldcoin integration was imperative to this project because funds generated from players is donated to local non-profit aid organizations--hence, proof of personhood is important to prevent sybil attacks that would render the game unplayable and donations fraudulent. 
+## Funding DisasterRelief.eth
+Chainlink CCIP is used to transfer tokens from the disaster relief contract on Base Goerli to DisasterRelief.eth address on Ethereum Sepolia. Chainlink Automation is used with a Chainlink Function that performs an API call to the [MET Norway Weather API](https://app.digitalpublicgoods.net/a/10219), a Digital Public Good that provides free access to high-quality 10-day weather forecast data for any geolocation in the world. When the player initially selected a location in WordRealm, the geolocation was passed to the Chainlink Function so that the DisasterRelief contract funded was the DisasterRelief contract designated to support that geolocation. 
 
 ## Running the server
 
@@ -20,3 +20,6 @@ We followed the Auth0 Integration to add Sign In with Worldcoin to WordRealm. Wo
 curl -X POST http://127.0.0.1:5000/process_string -H "Content-Type: application/json" -d '{"image_prompt": "Eating Turkish Ice Cream in Hagia Sophia"}'
 ```
 2. The application will return a CID (Content Identifier) which can be used to retrieve the generated image from the IPFS (InterPlanetary File System) through NFT Storage.
+
+## How It's Built
+We used the Auth0 Integration to add Sign In with Worldcoin to WordRealm. Worldcoin integration was imperative to this project because funds generated from players is donated to local non-profit aid organizations--hence, proof of personhood is important to prevent sybil attacks that would render the game unplayable and donations fraudulent. 
