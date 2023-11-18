@@ -85,7 +85,7 @@ contract WordListTest is BaseSetup {
         string[] memory wordbank = wordList.readWordbank();
         assertEq(wordbank.length, 13);
 
-        (string[] memory words, uint256 startIndex) = wordList
+        (string[] memory words, ) = wordList
             .requestWordsFromBank();
         // assertEq(requestId, 0);
         assertEq(words.length, wordList.readWordsize());

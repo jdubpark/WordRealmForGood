@@ -23,11 +23,17 @@ contract NFTTest is BaseSetup {
             "TEST",
             address(ccipRouter),
             address(LINK),
-            address(WETH)
+            address(WETH),
+            address(CCIP_BnM)
         );
 
         nft.setConnectedWordList(address(wordList));
         wordList.setConnectedNFT(address(nft));
+
+        // Random address as recipient for now
+        nft.setTreasuryAddressOnMainnet(
+            0x2B540f917F5F46d878De2c24fC14CDddcaF967ad
+        );
     }
 
     function fillWordlist() internal {
@@ -53,6 +59,8 @@ contract NFTTest is BaseSetup {
 
         vm.startPrank(alice);
 
+        nft.mintWords();
+
         string[] memory words = nft.getWords(address(alice));
         assertEq(words.length, wordList.readWordsize());
 
@@ -68,7 +76,10 @@ contract NFTTest is BaseSetup {
         // Mint as Alice
         vm.startPrank(alice);
 
+        uint256 tokenId = 0;
         uint256 alicePays = 0.1 ether;
+
+        nft.mintWords();
 
         string[] memory words = nft.getWords(address(alice));
         assertEq(words.length, wordList.readWordsize());
@@ -76,10 +87,12 @@ contract NFTTest is BaseSetup {
         string memory imageUri = "ipfs://url/image-alice";
         nft.mint{value: alicePays}(imageUri);
 
-        string memory uri = nft.tokenURI(0);
+        string memory uri = nft.tokenURI(tokenId);
         assertEq(uri, imageUri);
 
         vm.stopPrank();
+
+        tokenId++;
 
         //
         // Mint as Bob
@@ -92,6 +105,8 @@ contract NFTTest is BaseSetup {
         // vm.expectRevert(bytes4(keccak256("MustMintWordsBeforeMintNFT()")));
         // nft.mint{value: 0}(imageUri);
 
+        nft.mintWords();
+
         words = nft.getWords(address(bob));
         assertEq(words.length, wordList.readWordsize());
 
@@ -103,7 +118,7 @@ contract NFTTest is BaseSetup {
 
         nft.mint{value: bobPays}(imageUri);
 
-        uri = nft.tokenURI(0);
+        uri = nft.tokenURI(tokenId);
         assertEq(uri, imageUri);
 
         vm.stopPrank();
@@ -118,8 +133,13 @@ contract NFTTest is BaseSetup {
         // vm.expectEmit();
         // emit IWETH.Deposit(address(nft), address(this).balance);
 
-        uint256 fee = nft.getCCIPFee(nft.getCCIPMessage(alicePays + bobPays));
+        uint256 fee = nft.getCCIPFee(
+            nft.getCCIPMessage(
+                address(CCIP_BnM),
+                CCIP_BnM.balanceOf(address(nft))
+            )
+        );
         console2.log("fee", fee);
-        nft.sendTreasuryToMainnet{value: fee}();
+        nft.sendTreasuryToMainnetBnM{value: fee}();
     }
 }
