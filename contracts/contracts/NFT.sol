@@ -5,16 +5,14 @@ import {LinkTokenInterface} from "@chainlink/interfaces/LinkTokenInterface.sol";
 import {IRouterClient} from "@chainlink-ccip/ccip/interfaces/IRouterClient.sol";
 import {Client} from "@chainlink-ccip/ccip/libraries/Client.sol";
 import {Ownable} from "@openzeppelin/access/Ownable.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {ERC721} from "@openzeppelin/token/ERC721/ERC721.sol";
+import {ERC721URIStorage} from "@openzeppelin/token/ERC721/extensions/ERC721URIStorage.sol";
 
 import {IWETH} from "./interfaces/tokens/IWETH.sol";
 import {INFT} from "./interfaces/INFT.sol";
 import {IWordList} from "./interfaces/WordList/IWordList.sol";
 
 contract NFT is INFT, ERC721URIStorage, Ownable {
-    event MessageSent(bytes32 indexed messageId);
-
     ///
     /// NFT variables
     ///
@@ -24,6 +22,8 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     uint256 private tokenIdCounter = 0;
 
     uint256 public mintCost = 0.01 ether;
+
+    uint64 public destinationChainSelector = 16015286601757825753; // mainnet chain selector
 
     // token ID => bool (has fulfilled or not)
     mapping(uint256 => bool) public fulfilledDraws;
@@ -72,14 +72,15 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     }
 
     function mintWords() public {
-        require(!canMintWords[msg.sender], "NFT: Aalready minted words");
+        if (!canMintWords[msg.sender]) revert AlreadyMintedWords();
 
         (string[] memory words, ) = wordList.requestWordsFromBank();
         mintedWords[msg.sender] = words;
     }
 
     function mint(string memory _tokenURI) public payable {
-        require(msg.value >= mintCost, "NFT: Mint cost not met");
+        if (msg.value < mintCost) revert MintCostNotMet();
+        if (canMintWords[msg.sender]) revert MustMintWordsBeforeMintNFT();
 
         // mint a new NFT with (pseudo-random) words from the bank
         _mint(msg.sender, tokenIdCounter);
@@ -88,6 +89,7 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         ++tokenIdCounter;
 
         canMintWords[msg.sender] = false;
+        delete mintedWords[msg.sender];
     }
 
     function combine(uint256[] memory tokenIds) public {
@@ -117,40 +119,29 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     }
 
     ///
+    /// Treasury
+    ///
+
+    function convertETH2WETH(uint256 amount) external payable {
+        WETH.deposit{value: amount}();
+    }
+
+    ///
     /// CCIP
     ///
 
-    function getSupportedTokens(
-        uint64 chainSelector
-    ) external view returns (address[] memory tokens) {
-        tokens = ccipRouter.getSupportedTokens(chainSelector);
-    }
+    function sendTreasuryToMainnet() external payable {
+        // msg.value is for paying fee, don't deposit that
+        WETH.deposit{value: address(this).balance - msg.value}();
 
-    function sendTreasuryToMainnet() external {
-        uint64 destinationChainSelector = 16015286601757825753; // mainnet chain selector
+        Client.EVM2AnyMessage memory message = getCCIPMessage(
+            WETH.balanceOf(address(this))
+        );
 
-        WETH.deposit{value: address(this).balance}();
+        uint256 fee = getCCIPFee(message);
+        require(msg.value >= fee, "NFT: Not enough fee for CCIP");
 
-        Client.EVMTokenAmount[]
-            memory tokenAmounts = new Client.EVMTokenAmount[](1);
-        tokenAmounts[0] = Client.EVMTokenAmount({
-            token: address(WETH),
-            amount: WETH.balanceOf(address(this))
-        });
-
-        Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-            receiver: abi.encode(treasuryAddressOnMainnet),
-            data: "",
-            tokenAmounts: tokenAmounts,
-            extraArgs: "",
-            feeToken: address(0) // pay with native token
-        });
-
-        uint256 fee = ccipRouter.getFee(destinationChainSelector, message);
-
-        bytes32 messageId;
-
-        messageId = ccipRouter.ccipSend{value: fee}(
+        bytes32 messageId = ccipRouter.ccipSend{value: fee}(
             destinationChainSelector,
             message
         );
@@ -179,6 +170,12 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         wordList = IWordList(_wordList);
     }
 
+    function setDestinationChainSelector(
+        uint64 _destinationChainSelector
+    ) external onlyOwner {
+        destinationChainSelector = _destinationChainSelector;
+    }
+
     function getSentence(
         uint256 tokenId
     ) external view returns (string memory) {
@@ -188,6 +185,38 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     function getWords(address user) external view returns (string[] memory) {
         return mintedWords[user];
     }
+
+    function getCCIPMessage(
+        uint256 wethTransferAmount
+    ) public view returns (Client.EVM2AnyMessage memory message) {
+        Client.EVMTokenAmount[]
+            memory tokenAmounts = new Client.EVMTokenAmount[](1);
+
+        tokenAmounts[0] = Client.EVMTokenAmount({
+            token: address(WETH),
+            amount: wethTransferAmount
+        });
+
+        message = Client.EVM2AnyMessage({
+            receiver: abi.encode(treasuryAddressOnMainnet),
+            data: "",
+            tokenAmounts: tokenAmounts,
+            extraArgs: "",
+            feeToken: address(0) // pay with native token
+        });
+    }
+
+    function getCCIPFee(
+        Client.EVM2AnyMessage memory message
+    ) public view returns (uint256 fee) {
+        fee = ccipRouter.getFee(destinationChainSelector, message);
+    }
+
+    // function getCCIPSupportedTokens(
+    //     uint64 chainSelector
+    // ) external view returns (address[] memory tokens) {
+    //     tokens = ccipRouter.getSupportedTokens(chainSelector);
+    // }
 
     ///
     /// Misc.

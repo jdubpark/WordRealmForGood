@@ -1,10 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import {Client} from "@chainlink-ccip/ccip/libraries/Client.sol";
+
 interface INFT {
+    event MessageSent(bytes32 indexed messageId);
+    error AlreadyMintedWords();
+    error MintCostNotMet();
+    error MustMintWordsBeforeMintNFT();
+
     function mintWords() external;
 
     function mint(string memory _tokenURI) external payable;
+
+    ///
+    /// CCIP
+    ///
+
+    function sendTreasuryToMainnet() external payable;
+
+    ///
+    /// Getters/Setters
+    ///
 
     function setMintCost(uint256 _mintCost) external;
 
@@ -19,4 +36,12 @@ interface INFT {
     function getWords(
         address user
     ) external view returns (string[] memory words);
+
+    function getCCIPMessage(
+        uint256 wethTransferAmount
+    ) external view returns (Client.EVM2AnyMessage memory message);
+
+    function getCCIPFee(
+        Client.EVM2AnyMessage memory message
+    ) external view returns (uint256 fee);
 }
