@@ -10,6 +10,7 @@ import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
+import {IPUSHCommInterface} from "./interfaces/IPUSHCommInterface.sol";
 import {ISmartTreasury} from "./interfaces/ISmartTreasury.sol";
 
 // import {Ownable} from "@openzeppelin/access/Ownable.sol";
@@ -93,6 +94,27 @@ contract SmartTreasury is
                 ++i;
             }
         }
+
+        // Push notification
+        IPUSHCommInterface(0x0C34d54a09CFe75BCcd878A469206Ae77E0fe6e7)
+            .sendNotification(
+                0xbF57d398b7a166E255c0Bf83f6e9C322d12FB00a, // from channel - recommended to set channel via dApp and put it's value -> then once contract is deployed, go back and add the contract address as delegate for your channel
+                address(this), // to recipient, put address(this) in case you want Broadcast or Subset. For targeted put the address to which you want to send
+                bytes(
+                    string(
+                        // We are passing identity here: https://push.org/docs/notifications/notification-standards/notification-standards-advance/#notification-identity
+                        abi.encodePacked(
+                            "0", // this represents minimal identity, learn more: https://push.org/docs/notifications/notification-standards/notification-standards-advance/#notification-identity
+                            "+", // segregator
+                            "1", // define notification type:  https://push.org/docs/notifications/build/types-of-notification (1, 3 or 4) = (Broadcast, targeted or subset)
+                            "+", // segregator
+                            "[Disaster Relief Fund] Dispatched", // this is notificaiton title
+                            "+", // segregator
+                            "Based on the forecasted weather data in the next 10 days, we have dispatched funding for local disaster reliefs to prepare in advance." // notification body
+                        )
+                    )
+                )
+            );
     }
 
     function _processResponse(

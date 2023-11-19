@@ -193,6 +193,12 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         mintedSentences[tokenIdCounter] = sentence;
     }
 
+    function burn(uint256 tokenId) public {
+        require(ownerOf(tokenId) == msg.sender, "NFT: Only owner can burn");
+
+        _burn(tokenId);
+    }
+
     ///
     /// Treasury
     ///
