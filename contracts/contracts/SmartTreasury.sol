@@ -10,8 +10,8 @@ import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
-import {IPUSHCommInterface} from "./interfaces/IPUSHCommInterface.sol";
 import {ISmartTreasury} from "./interfaces/ISmartTreasury.sol";
+import {IPUSHCommInterface} from "./interfaces/IPUSHCommInterface.sol";
 
 // import {Ownable} from "@openzeppelin/access/Ownable.sol";
 
