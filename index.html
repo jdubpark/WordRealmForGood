@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Selections</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const landmarks = document.querySelectorAll('.landmark');
+            const cuisines = document.querySelectorAll('.cuisine');
+            const carpets = document.querySelectorAll('.carpet');
+            const output = document.querySelector('#output');
+            const selections = {
+                landmark: '',
+                cuisine: '',
+                carpet: ''
+            };
+
+            function updateOutput() {
+                output.textContent = `Turkish cat eating ${selections.cuisine} on a flying ${selections.carpet} Carpet inside ${selections.landmark}`;
+            }
+
+            landmarks.forEach(item => {
+                item.addEventListener('click', function() {
+                    landmarks.forEach(i => i.classList.remove('bg-blue-300'));
+                    this.classList.add('bg-blue-300');
+                    selections.landmark = this.textContent.trim();
+                    updateOutput();
+                });
+            });
+
+            cuisines.forEach(item => {
+                item.addEventListener('click', function() {
+                    cuisines.forEach(i => i.classList.remove('bg-blue-300'));
+                    this.classList.add('bg-blue-300');
+                    selections.cuisine = this.textContent.trim();
+                    updateOutput();
+                });
+            });
+
+            carpets.forEach(item => {
+                item.addEventListener('click', function() {
+                    carpets.forEach(i => i.classList.remove('bg-blue-300'));
+                    this.classList.add('bg-blue-300');
+                    selections.carpet = this.textContent.trim();
+                    updateOutput();
+                });
+            });
+        });
+    </script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center h-screen gap-4 p-4">
+    <div class="text-center">
+        <h1 class="text-4xl font-bold text-gray-800 mb-6">Select Your Turkish Adventure</h1>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">Landmarks</h2>
+                <div class="space-y-1">
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Hagia Sophia</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Topkapi Palace</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Blue Mosque</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Grand Bazaar</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Basilica Cistern</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Galata Tower</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Dolmabahçe Palace</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Süleymaniye Mosque</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Chora Church</div>
+                    <div class="landmark cursor-pointer p-2 hover:bg-gray-200 rounded">Galata Bridge</div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">Cuisine</h2>
+                <div class="space-y-1">
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Kebaps</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Mezes</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Lahmacun</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Baklava</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Döner</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Simit</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Börek</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Balık Ekmek</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Menemen</div>
+                    <div class="cuisine cursor-pointer p-2 hover:bg-gray-200 rounded">Kumpir</div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded shadow">
+                <h2 class="text-xl font-semibold mb-2">Carpets</h2>
+                <div class="space-y-1">
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Hereke</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Milas</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Kayseri</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Konya</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Ghiordes</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Oushak</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Sivas</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Bergama</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Ladik</div>
+                    <div class="carpet cursor-pointer p-2 hover:bg-gray-200 rounded">Anatolian</div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-6">
+            <div id="output" class="text-lg p-4 bg-white rounded shadow">Select items to see the magic happen!</div>
+        </div>
+        <button id="magicButton" class="mt-4 px-6 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300">Mint Cat Button</button>
+    </div>
+</body>
+</html>
