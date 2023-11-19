@@ -743,7 +743,7 @@
   },
   {
     "inputs": [],
-    "name": "mintCost",
+    "name": "mintNFTCost",
     "outputs": [
       {
         "internalType": "uint256",
@@ -758,7 +758,27 @@
     "inputs": [],
     "name": "mintWords",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "mintWordsCost",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "mintWordsV2",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -926,11 +946,16 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_mintCost",
+        "name": "_mintNFTCost",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_mintWordsCost",
         "type": "uint256"
       }
     ],
-    "name": "setMintCost",
+    "name": "setMintCosts",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

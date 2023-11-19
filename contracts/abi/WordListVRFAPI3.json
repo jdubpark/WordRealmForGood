@@ -11,26 +11,23 @@
     "type": "constructor"
   },
   {
+    "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
         "internalType": "address",
-        "name": "owner",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
         "type": "address"
       }
     ],
-    "name": "OwnableInvalidOwner",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "OwnableUnauthorizedAccount",
-    "type": "error"
+    "name": "OwnershipTransferRequested",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -38,13 +35,13 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "previousOwner",
+        "name": "from",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "address",
-        "name": "newOwner",
+        "name": "to",
         "type": "address"
       }
     ],
@@ -139,6 +136,13 @@
     ],
     "name": "WithdrawalRequested",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "acceptOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -340,13 +344,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "string",
@@ -378,6 +375,11 @@
         "internalType": "bytes32",
         "name": "requestId",
         "type": "bytes32"
+      },
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
       }
     ],
     "stateMutability": "payable",
@@ -454,7 +456,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "newOwner",
+        "name": "to",
         "type": "address"
       }
     ],

@@ -35,17 +35,22 @@ slither-wordlist :; slither ./contracts/WordList/WordList.sol --solc-remaps "@op
 
 format :; prettier --write contracts/**/*.sol && prettier --write contracts/*.sol
 
-abi:
+gen-abi:
 	forge inspect contracts/NFT.sol:NFT abi > abi/NFT.json
+	forge inspect contracts/WordList/WordList.sol:WordList abi > abi/WordList.json
 	forge inspect contracts/WordList/WordListVRFAPI3.sol:WordListVRFAPI3 abi > abi/WordListVRFAPI3.json
 	forge inspect contracts/SmartTreasury.sol:SmartTreasury abi > abi/SmartTreasury.json
 
 gen-types:
-	make abi
 	mkdir -p ./types-typechain
 	npx typechain --target ethers-v5 ./abi/*.json --out-dir ./types-typechain
 
+cp-abi:
+	make gen-abi
+	cp -r ./abi/* ../website/src/abi
+
 cp-types:
+	make gen-abi
 	make gen-types
 	cp -r ./types-typechain/* ../website/src/types-typechain
 
@@ -91,7 +96,7 @@ verify-base-goerli-nft:
 	--etherscan-api-key ${BASESCAN_API_KEY} \
 	--watch \
 	--constructor-args $(cast abi-encode "constructor(string, string, address, address, address, address, address, string, string)" "WordRealmPublicGood" "WordRPG" "0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D" "0xD886E2286Fd1073df82462ea1822119600Af80b6" "0x4200000000000000000000000000000000000006" "0xbf9036529123DE264bFA0FC7362fE25B650D4B16" "0x78eC127A3716D447F4575E9c834d452E397EE9E1" "app_staging_2d47d08eb224ee65b40dacafa16115f5" "mint-nft") \
-	0x6c391a3eD9d45a9449B411015a651838582D1183 \
+	0xcb59BccEDEC3B8f20195307721559B1B1cd7ff23 \
 	contracts/NFT.sol:NFT
 
 verify-base-goerli-wordlist:
@@ -99,9 +104,17 @@ verify-base-goerli-wordlist:
 	--chain base-goerli \
 	--etherscan-api-key ${BASESCAN_API_KEY} \
 	--watch \
-	--constructor-args $(cast abi-encode "constructor(address)" "0xa0AD79D995DdeeB18a14eAef56A549A04e3Aa1Bd") \
-	0x625D038199BC7D5DcfF450760786408CDeEE6E96 \
-	contracts/WordList/WordListVRFAPI3.sol:WordListVRFAPI3
+	0x9C303D0E32072651333F3De1D74DdE6daf1Acc9d \
+	contracts/WordList/WordList.sol:WordList
+
+# verify-base-goerli-wordlist:
+# 	forge verify-contract \
+# 	--chain base-goerli \
+# 	--etherscan-api-key ${BASESCAN_API_KEY} \
+# 	--watch \
+# 	--constructor-args $(cast abi-encode "constructor(address)" "0xa0AD79D995DdeeB18a14eAef56A549A04e3Aa1Bd") \
+# 	0x9C303D0E32072651333F3De1D74DdE6daf1Acc9d \
+# 	contracts/WordList/WordListVRFAPI3.sol:WordListVRFAPI3
 
 verify-eth-sepolia-smarttreasury:
 	forge verify-contract \

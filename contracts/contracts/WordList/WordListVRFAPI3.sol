@@ -2,14 +2,12 @@
 pragma solidity >=0.8.0;
 
 import {RrpRequesterV0} from "@api3/airnode-protocol/contracts/rrp/requesters/RrpRequesterV0.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+// import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {WordListBase} from "./Base.sol";
 import {INFT} from "../interfaces/INFT.sol";
-import {IWordListVRF} from "../interfaces/WordList/IWordListVRF.sol";
 
-contract WordListVRFAPI3 is IWordListVRF, RrpRequesterV0, Ownable {
+contract WordListVRFAPI3 is WordListBase, RrpRequesterV0 {
     event RequestedUint256(bytes32 indexed requestId);
     event ReceivedUint256(bytes32 indexed requestId, uint256 response);
     event RequestedUint256Array(bytes32 indexed requestId, uint256 size);
@@ -29,15 +27,6 @@ contract WordListVRFAPI3 is IWordListVRF, RrpRequesterV0, Ownable {
         // string[] words;
     }
 
-    string[] internal wordbankLandmark;
-    string[] internal wordbankCuisine;
-    string[] internal wordbankCarpet;
-
-    address public connectedNFT;
-
-    // how many words to return per bank, default 3
-    uint256 internal wordsize = 3;
-
     //
     // API3 Airnode varaibles
     //
@@ -54,25 +43,19 @@ contract WordListVRFAPI3 is IWordListVRF, RrpRequesterV0, Ownable {
 
     constructor(
         address _airnodeRrp
-    ) Ownable(msg.sender) RrpRequesterV0(_airnodeRrp) {}
-
-    modifier onlyConnectedNFT() {
-        require(msg.sender == connectedNFT, "WordListVRF: Only Connected NFT");
-        _;
-    }
-
-    modifier onlyOwnerOrConnectedNFT() {
-        require(
-            msg.sender == owner() || msg.sender == connectedNFT,
-            "WordListVRF: Only Owner or Connected NFT"
-        );
-        _;
-    }
+    ) WordListBase(msg.sender) RrpRequesterV0(_airnodeRrp) {}
 
     // Assumes the subscription is funded sufficiently.
+    // `string[] memory` return is ignored for interface compatibility.
     function requestRandomWordFromBank(
         address requester
-    ) external payable onlyConnectedNFT returns (bytes32 requestId) {
+    )
+        external
+        override
+        payable
+        onlyConnectedNFT
+        returns (bytes32 requestId, string[] memory)
+    {
         requestId = makeRequestUint256Array();
 
         airnodeRequests[requestId] = QRNGAirnodeRequestStatus({
@@ -164,68 +147,8 @@ contract WordListVRFAPI3 is IWordListVRF, RrpRequesterV0, Ownable {
     }
 
     //
-    // WordBank functions
-    //
-
-    function emptyWordbank(string memory category) external onlyOwner {
-        if (Strings.equal(category, "landmark")) {
-            delete wordbankLandmark;
-        } else if (Strings.equal(category, "cuisine")) {
-            delete wordbankCuisine;
-        } else if (Strings.equal(category, "carpet")) {
-            delete wordbankCarpet;
-        } else revert("WordListVRF: Invalid category");
-    }
-
-    function replaceWordbank(
-        string memory category,
-        string[] memory words
-    ) external onlyOwner {
-        if (Strings.equal(category, "landmark")) {
-            delete wordbankLandmark;
-            wordbankLandmark = words;
-        } else if (Strings.equal(category, "cuisine")) {
-            delete wordbankCuisine;
-            wordbankCuisine = words;
-        } else if (Strings.equal(category, "carpet")) {
-            delete wordbankCarpet;
-            wordbankCarpet = words;
-        } else revert("WordListVRF: Invalid category");
-    }
-
-    function readWordbank(
-        string memory category
-    ) external view override returns (string[] memory) {
-        if (Strings.equal(category, "landmark")) return wordbankLandmark;
-        else if (Strings.equal(category, "cuisine")) return wordbankCuisine;
-        else if (Strings.equal(category, "carpet")) return wordbankCarpet;
-        else revert("WordListVRF: Invalid category");
-    }
-
-    function readWordsize() external view override returns (uint256) {
-        return wordsize;
-    }
-
-    //
     // Storage getters/setters
     //
-
-    function setConnectedNFT(address _connectedNFT) external {
-        require(
-            msg.sender == owner() || msg.sender == connectedNFT,
-            "WordListVRF: Only Owner or Connected NFT"
-        );
-        require(
-            _connectedNFT != address(0),
-            "WordListVRF: Connected NFT cannot be 0x0"
-        );
-
-        connectedNFT = _connectedNFT;
-    }
-
-    function setWordsize(uint256 _wordsize) external onlyOwner {
-        wordsize = _wordsize;
-    }
 
     function setRequestParameters(
         address _airnode,

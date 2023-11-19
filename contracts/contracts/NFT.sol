@@ -26,7 +26,9 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
     uint256 private tokenIdCounter = 0;
 
-    uint256 public mintCost = 0.01 ether;
+    uint256 public mintNFTCost = 0.01 ether;
+
+    uint256 public mintWordsCost = 0.01 ether;
 
     uint64 public destinationChainSelector = 16015286601757825753; // mainnet chain selector
 
@@ -38,6 +40,9 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
     // token ID => sentence
     mapping(uint256 => string) private mintedSentences;
+
+    // user Address => mintWords counter
+    mapping(address => uint256) public mintWordsCounter;
 
     ///
     /// Worldcoin variables
@@ -93,7 +98,10 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
 
         worldIdRouter = IWorldID(_worldIdRouter);
         externalNullifier = abi
-            .encodePacked(abi.encodePacked(_worldcoinAppId).hashToField(), _worldcoinActionId)
+            .encodePacked(
+                abi.encodePacked(_worldcoinAppId).hashToField(),
+                _worldcoinActionId
+            )
             .hashToField();
 
         LINK.approve(_ccipRouter, type(uint256).max);
@@ -101,23 +109,33 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         CCIP_BnM.approve(_ccipRouter, type(uint256).max);
     }
 
-    // function mintWords() public {
-    //     if (mintedWords[msg.sender].length > 0) revert AlreadyMintedWords();
+    function mintWords() public payable {
+        require(
+            msg.value >= mintWordsCost * mintWordsCounter[msg.sender],
+            "NFT: Not enough ETH"
+        );
 
-    //     (string[] memory words, ) = wordList.requestWordsFromBank();
-    //     mintedWords[msg.sender] = words;
-    // }
-
-    function mintWords() public {
-        if (mintedWords[msg.sender].length > 0) revert AlreadyMintedWords();
+        if (mintWordsCounter[msg.sender] == 3) revert AlreadyMintedWords();
+        mintWordsCounter[msg.sender]++;
 
         wordList.requestRandomWordFromBank(msg.sender);
     }
 
-    function fulfillMintWords(
-        address user,
-        string[] memory words
-    ) public {
+    function mintWordsV2() public payable {
+        require(
+            msg.value >= mintWordsCost * mintWordsCounter[msg.sender],
+            "NFT: Not enough ETH"
+        );
+
+        if (mintWordsCounter[msg.sender] == 3) revert AlreadyMintedWords();
+        mintWordsCounter[msg.sender]++;
+
+        (bytes32 requestId, string[] memory words) = wordList
+            .requestRandomWordFromBank(msg.sender);
+        mintedWords[msg.sender] = words;
+    }
+
+    function fulfillMintWords(address user, string[] memory words) public {
         require(
             msg.sender == address(wordList),
             "NFT: Only WordList can fulfill mintWords"
@@ -132,7 +150,7 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     ) public payable {
         verifyWithWorldcoin(wva);
 
-        if (msg.value < mintCost) revert MintCostNotMet();
+        if (msg.value < mintNFTCost) revert MintCostNotMet();
         if (mintedWords[msg.sender].length == 0)
             revert MustMintWordsBeforeMintNFT();
 
@@ -143,6 +161,7 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         ++tokenIdCounter;
 
         delete mintedWords[msg.sender];
+        mintWordsCounter[msg.sender] = 0;
 
         // for CCIP test, drip 1 CCIP_BnM for every mint (as treasury)
         CCIP_BnM.drip(address(this));
@@ -254,8 +273,12 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     /// Storage getters/setters
     ///
 
-    function setMintCost(uint256 _mintCost) external onlyOwner {
-        mintCost = _mintCost;
+    function setMintCosts(
+        uint256 _mintNFTCost,
+        uint256 _mintWordsCost
+    ) external onlyOwner {
+        mintNFTCost = _mintNFTCost;
+        mintWordsCost = _mintWordsCost;
     }
 
     function setTreasuryAddressOnMainnet(address _treasury) external onlyOwner {

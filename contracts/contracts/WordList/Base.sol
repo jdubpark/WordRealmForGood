@@ -2,19 +2,22 @@
 pragma solidity >=0.8.0;
 
 import {ConfirmedOwner} from "@chainlink/ConfirmedOwner.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {INFT} from "../interfaces/INFT.sol";
-import {IWordListBase} from "../interfaces/WordList/IWordListBase.sol";
+import {IWordListVRF} from "../interfaces/WordList/IWordListVRF.sol";
 
-abstract contract WordListBase is IWordListBase, ConfirmedOwner {
-    string[] internal wordbank;
+abstract contract WordListBase is IWordListVRF, ConfirmedOwner {
+    string[] internal wordbankLandmark;
+    string[] internal wordbankCuisine;
+    string[] internal wordbankCarpet;
 
     address public connectedNFT;
 
-    // how many words to return, default 5
-    uint256 internal wordsize = 5;
+    // how many words to return, default 3
+    uint256 internal wordsize = 3;
 
-    constructor() ConfirmedOwner(msg.sender) {}
+    constructor(address _owner) ConfirmedOwner(_owner) {}
 
     modifier onlyConnectedNFT() {
         require(msg.sender == connectedNFT, "WordListVRF: Only Connected NFT");
@@ -29,8 +32,55 @@ abstract contract WordListBase is IWordListBase, ConfirmedOwner {
         _;
     }
 
+    function requestRandomWordFromBank(
+        address
+    ) external virtual payable returns (bytes32, string[] memory) {}
+
     //
-    // Storage setters
+    // WordBank functions
+    //
+
+    function emptyWordbank(string memory category) external onlyOwner {
+        if (Strings.equal(category, "landmark")) {
+            delete wordbankLandmark;
+        } else if (Strings.equal(category, "cuisine")) {
+            delete wordbankCuisine;
+        } else if (Strings.equal(category, "carpet")) {
+            delete wordbankCarpet;
+        } else revert("WordListVRF: Invalid category");
+    }
+
+    function replaceWordbank(
+        string memory category,
+        string[] memory words
+    ) external onlyOwner {
+        if (Strings.equal(category, "landmark")) {
+            delete wordbankLandmark;
+            wordbankLandmark = words;
+        } else if (Strings.equal(category, "cuisine")) {
+            delete wordbankCuisine;
+            wordbankCuisine = words;
+        } else if (Strings.equal(category, "carpet")) {
+            delete wordbankCarpet;
+            wordbankCarpet = words;
+        } else revert("WordListVRF: Invalid category");
+    }
+
+    function readWordbank(
+        string memory category
+    ) external view override returns (string[] memory) {
+        if (Strings.equal(category, "landmark")) return wordbankLandmark;
+        else if (Strings.equal(category, "cuisine")) return wordbankCuisine;
+        else if (Strings.equal(category, "carpet")) return wordbankCarpet;
+        else revert("WordListVRF: Invalid category");
+    }
+
+    function readWordsize() external view override returns (uint256) {
+        return wordsize;
+    }
+
+    //
+    // Storage getters/setters
     //
 
     function setConnectedNFT(address _connectedNFT) external {
@@ -48,63 +98,5 @@ abstract contract WordListBase is IWordListBase, ConfirmedOwner {
 
     function setWordsize(uint256 _wordsize) external onlyOwner {
         wordsize = _wordsize;
-    }
-
-    //
-    // WordBank functions
-    //
-
-    function emptyWordbank() external onlyOwner {
-        delete wordbank;
-    }
-
-    function replaceWordbank(string[] memory words) external onlyOwner {
-        delete wordbank;
-        wordbank = words;
-    }
-
-    function insertIntoWordbank(string[] memory words) external onlyOwner {
-        for (uint256 i = 0; i < words.length; ) {
-            wordbank.push(words[i]);
-            unchecked {
-                ++i;
-            }
-        }
-    }
-
-    function removeFromWordbank(uint256[] memory indices) external onlyOwner {
-        // Let N be the cardinality of `indices`.
-        // Move N items to the last N indices of the array and then pop N times.
-        // Load into memory and assign to storage at the end to save gas.
-        string[] memory t_wordbank = wordbank;
-        uint256 i = 0;
-        uint256 t_wordbank_length = t_wordbank.length;
-
-        for (; i < indices.length; ) {
-            uint256 index = indices[i];
-
-            unchecked {
-                ++i;
-            }
-
-            t_wordbank[index] = t_wordbank[t_wordbank_length - i];
-        }
-
-        // Need to load to storage here since we can't pop on memory arrays.
-        wordbank = t_wordbank;
-        while (i > 0) {
-            wordbank.pop();
-            unchecked {
-                --i;
-            }
-        }
-    }
-
-    function readWordbank() external view override returns (string[] memory) {
-        return wordbank;
-    }
-
-    function readWordsize() external view override returns (uint256) {
-        return wordsize;
     }
 }

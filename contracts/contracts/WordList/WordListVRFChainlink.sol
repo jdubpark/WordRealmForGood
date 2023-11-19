@@ -1,5 +1,5 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity >=0.8.0;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.0;
 
 // import {VRFConsumerBaseV2} from "@chainlink/VRFConsumerBaseV2.sol";
 // import {VRFCoordinatorV2Interface} from "@chainlink/interfaces/VRFCoordinatorV2Interface.sol";

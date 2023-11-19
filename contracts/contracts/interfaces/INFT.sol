@@ -17,7 +17,9 @@ interface INFT {
         uint256[8] proof;
     }
 
-    function mintWords() external;
+    function mintWords() external payable;
+
+    function mintWordsV2() external payable;
 
     function fulfillMintWords(
         address user,
@@ -41,7 +43,7 @@ interface INFT {
     /// Getters/Setters
     ///
 
-    function setMintCost(uint256 _mintCost) external;
+    function setMintCosts(uint256 _mintNFTCost, uint256 _mintWordsCost) external;
 
     function setConnectedWordList(address _wordList) external;
 
