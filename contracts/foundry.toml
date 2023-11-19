@@ -4,11 +4,12 @@
 
 [profile.default]
 auto_detect_solc = true
+auto_detect_remappings = false
 src = "contracts"
 test = "forge-tests"
 out = "forge-artifacts"
 script = "forge-scripts"
-libs = ["node_modules", "lib"]
+libs = ["./node_modules", "./lib"]
 gas_reports = ["*"]
 fs_permissions = [{ access = "read", path = "./forge-artifacts"}]
 optimizer = true

@@ -18,6 +18,7 @@ install:
 	forge install foundry-rs/forge-std --no-commit
 	forge install smartcontractkit/chainlink-brownie-contracts@0.8.0 --no-commit
 	forge install openzeppelin/openzeppelin-contracts@v5.0.0 --no-commit
+	forge install https://github.com/api3dao/airnode --no-commit
 
 # Update Dependencies
 update:; forge update
@@ -36,7 +37,17 @@ format :; prettier --write contracts/**/*.sol && prettier --write contracts/*.so
 
 abi:
 	forge inspect contracts/NFT.sol:NFT abi > abi/NFT.json
+	forge inspect contracts/WordList/WordListVRFAPI3.sol:WordListVRFAPI3 abi > abi/WordListVRFAPI3.json
 	forge inspect contracts/SmartTreasury.sol:SmartTreasury abi > abi/SmartTreasury.json
+
+gen-types:
+	make abi
+	mkdir -p ./types-typechain
+	npx typechain --target ethers-v5 ./abi/*.json --out-dir ./types-typechain
+
+cp-types:
+	make gen-types
+	cp -r ./types-typechain/* ../website/src/types-typechain
 
 anvil :; anvil --fork-url ${FORK_URL} -m 'test test test test test test test test test test test junk'
 
@@ -79,8 +90,8 @@ verify-base-goerli-nft:
 	--chain base-goerli \
 	--etherscan-api-key ${BASESCAN_API_KEY} \
 	--watch \
-	--constructor-args $(cast abi-encode "constructor(string, string, address, address, address, address)" "WordRealmPublicGood" "WordRPG" "0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D" "0xD886E2286Fd1073df82462ea1822119600Af80b6" "0x4200000000000000000000000000000000000006" "0xbf9036529123DE264bFA0FC7362fE25B650D4B16") \
-	0xAe6b0e9F687a149744B50d8875CC7911dde64410 \
+	--constructor-args $(cast abi-encode "constructor(string, string, address, address, address, address, address, string, string)" "WordRealmPublicGood" "WordRPG" "0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D" "0xD886E2286Fd1073df82462ea1822119600Af80b6" "0x4200000000000000000000000000000000000006" "0xbf9036529123DE264bFA0FC7362fE25B650D4B16" "0x78eC127A3716D447F4575E9c834d452E397EE9E1" "app_staging_2d47d08eb224ee65b40dacafa16115f5" "mint-nft") \
+	0x6c391a3eD9d45a9449B411015a651838582D1183 \
 	contracts/NFT.sol:NFT
 
 verify-base-goerli-wordlist:
@@ -88,8 +99,9 @@ verify-base-goerli-wordlist:
 	--chain base-goerli \
 	--etherscan-api-key ${BASESCAN_API_KEY} \
 	--watch \
-	0x5ff0e42Ec998aA787561111F112917d7Ae4a64Cb \
-	contracts/WordList/WordList.sol:WordList
+	--constructor-args $(cast abi-encode "constructor(address)" "0xa0AD79D995DdeeB18a14eAef56A549A04e3Aa1Bd") \
+	0x625D038199BC7D5DcfF450760786408CDeEE6E96 \
+	contracts/WordList/WordListVRFAPI3.sol:WordListVRFAPI3
 
 verify-eth-sepolia-smarttreasury:
 	forge verify-contract \

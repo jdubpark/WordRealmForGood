@@ -13,7 +13,7 @@ contract DeployNFT is ScriptHelper {
 
     function setUp() public {
         // Note: When deploying NFT, make sure to deploy WordList first or use an existing WordList contract
-        wordList = address(0x5ff0e42Ec998aA787561111F112917d7Ae4a64Cb);
+        wordList = address(0x625D038199BC7D5DcfF450760786408CDeEE6E96);
     }
 
     function run() external {
@@ -21,21 +21,35 @@ contract DeployNFT is ScriptHelper {
             address WETH,
             address LINK,
             address CCIP_BnM,
-            address ccipRouter
+            address ccipRouter,
+            address worldIdRouter
         ) = loadAddresses();
+
+        string
+            memory worldcoinAppId = "app_staging_2d47d08eb224ee65b40dacafa16115f5";
+        string memory worldcoinActionId = "mint-nft";
 
         // uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         // vm.startBroadcast(deployerPrivateKey);
         vm.startBroadcast();
 
-        NFT nft = new NFT("WordRealmPublicGood", "WordRPG", ccipRouter, LINK, WETH, CCIP_BnM);
+        NFT nft = new NFT(
+            "WordRealmPublicGood",
+            "WordRPG",
+            ccipRouter,
+            LINK,
+            WETH,
+            CCIP_BnM,
+            worldIdRouter,
+            worldcoinAppId,
+            worldcoinActionId
+        );
 
         nft.setConnectedWordList(address(wordList));
         IWordList(wordList).setConnectedNFT(address(nft));
 
-        // Random address as recipient for now
         nft.setTreasuryAddressOnMainnet(
-            0x2B540f917F5F46d878De2c24fC14CDddcaF967ad
+            0x6837Cbcd4ff0bCF18222C4090e0536Db6E4909Cd
         );
 
         vm.stopBroadcast();

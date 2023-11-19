@@ -19,7 +19,15 @@ interface INFT {
 
     function mintWords() external;
 
-    function mint(string memory _tokenURI, WorldcoinVerifiedAction calldata wva) external payable;
+    function fulfillMintWords(
+        address user,
+        string[] memory words
+    ) external;
+
+    function mint(
+        string memory _tokenURI,
+        WorldcoinVerifiedAction calldata wva
+    ) external payable;
 
     ///
     /// CCIP

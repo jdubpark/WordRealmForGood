@@ -24,6 +24,7 @@ contract BaseSetup is Test {
     IRouterClient internal ccipRouter;
 
     IFunctionsClient internal functionsRouter;
+    address internal worldIdRouter;
 
     bytes32 internal chainlinkDONId;
 
@@ -64,6 +65,8 @@ contract BaseSetup is Test {
             functionsRouter = IFunctionsClient(
                 0xb83E47C2bC239B3bf370bc41e1459A34b41238D0
             );
+            worldIdRouter = 0x78eC127A3716D447F4575E9c834d452E397EE9E1;
+
             // bytes32("fun-ethereum-sepolia-1")
             chainlinkDONId = 0x66756e2d657468657265756d2d7365706f6c69612d3100000000000000000000;
 

@@ -12,12 +12,21 @@ import {BaseSetup} from "../utils/BaseSetup.sol";
 contract NFTTest is BaseSetup {
     WordList public wordList;
     NFT public nft;
+    INFT.WorldcoinVerifiedAction public wva;
 
     function setUp() public override {
         super.setUp();
 
         wordList = WordList(payable(0x5ff0e42Ec998aA787561111F112917d7Ae4a64Cb));
-        nft = NFT(payable(0xAe6b0e9F687a149744B50d8875CC7911dde64410));
+        nft = NFT(payable(0x6c391a3eD9d45a9449B411015a651838582D1183));
+
+        uint256[8] memory dummyProofs;
+        wva = INFT.WorldcoinVerifiedAction({
+            signal: address(0),
+            root: 0,
+            nullifierHash: 0,
+            proof: dummyProofs
+        });
     }
 
     function fillWordlist() internal {
@@ -50,7 +59,7 @@ contract NFTTest is BaseSetup {
         string[] memory words = nft.getWords(address(alice));
         assertEq(words.length, wordList.readWordsize());
 
-        nft.mint{value: 0.1 ether}("ipfs://url/image");
+        nft.mint{value: 0.1 ether}("ipfs://url/image", wva);
 
         vm.stopPrank();
     }
@@ -71,7 +80,7 @@ contract NFTTest is BaseSetup {
         assertEq(words.length, wordList.readWordsize());
 
         string memory imageUri = "ipfs://url/image-alice";
-        nft.mint{value: alicePays}(imageUri);
+        nft.mint{value: alicePays}(imageUri, wva);
 
         string memory uri = nft.tokenURI(tokenId);
         assertEq(uri, imageUri);
@@ -102,7 +111,7 @@ contract NFTTest is BaseSetup {
         // vm.expectRevert(INFT.MintCostNotMet.selector);
         // nft.mint{value: 0}(imageUri);
 
-        nft.mint{value: bobPays}(imageUri);
+        nft.mint{value: bobPays}(imageUri, wva);
 
         uri = nft.tokenURI(tokenId);
         assertEq(uri, imageUri);

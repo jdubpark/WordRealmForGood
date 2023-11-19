@@ -14,8 +14,14 @@ contract NFTTest is BaseSetup {
     WordList public wordList;
     NFT public nft;
 
+    INFT.WorldcoinVerifiedAction public wva;
+
     function setUp() public override {
         super.setUp();
+
+        string
+            memory worldcoinAppId = "app_staging_2d47d08eb224ee65b40dacafa16115f5";
+        string memory worldcoinActionId = "mint-nft";
 
         wordList = new WordList();
         nft = new NFT(
@@ -24,16 +30,27 @@ contract NFTTest is BaseSetup {
             address(ccipRouter),
             address(LINK),
             address(WETH),
-            address(CCIP_BnM)
+            address(CCIP_BnM),
+            worldIdRouter,
+            worldcoinAppId,
+            worldcoinActionId
         );
 
         nft.setConnectedWordList(address(wordList));
         wordList.setConnectedNFT(address(nft));
 
-        // Random address as recipient for now
+        // Random address as recipient for test
         nft.setTreasuryAddressOnMainnet(
             0x2B540f917F5F46d878De2c24fC14CDddcaF967ad
         );
+
+        uint256[8] memory dummyProofs;
+        wva = INFT.WorldcoinVerifiedAction({
+            signal: address(0),
+            root: 0,
+            nullifierHash: 0,
+            proof: dummyProofs
+        });
     }
 
     function fillWordlist() internal {
@@ -64,7 +81,7 @@ contract NFTTest is BaseSetup {
         string[] memory words = nft.getWords(address(alice));
         assertEq(words.length, wordList.readWordsize());
 
-        nft.mint{value: 0.1 ether}("ipfs://url/image");
+        nft.mint{value: 0.1 ether}("ipfs://url/image", wva);
 
         vm.stopPrank();
     }
@@ -85,7 +102,7 @@ contract NFTTest is BaseSetup {
         assertEq(words.length, wordList.readWordsize());
 
         string memory imageUri = "ipfs://url/image-alice";
-        nft.mint{value: alicePays}(imageUri);
+        nft.mint{value: alicePays}(imageUri, wva);
 
         string memory uri = nft.tokenURI(tokenId);
         assertEq(uri, imageUri);
@@ -116,7 +133,7 @@ contract NFTTest is BaseSetup {
         // vm.expectRevert(INFT.MintCostNotMet.selector);
         // nft.mint{value: 0}(imageUri);
 
-        nft.mint{value: bobPays}(imageUri);
+        nft.mint{value: bobPays}(imageUri, wva);
 
         uri = nft.tokenURI(tokenId);
         assertEq(uri, imageUri);

@@ -12,7 +12,7 @@ import {ICCIP_BnM} from "./interfaces/tokens/ICCIP_BnM.sol";
 import {IWETH} from "./interfaces/tokens/IWETH.sol";
 import {INFT} from "./interfaces/INFT.sol";
 import {IWorldID} from "./interfaces/IWorldID.sol";
-import {IWordList} from "./interfaces/WordList/IWordList.sol";
+import {IWordListVRF} from "./interfaces/WordList/IWordListVRF.sol";
 import {ByteHasher} from "./libs/ByteHasher.sol";
 
 contract NFT is INFT, ERC721URIStorage, Ownable {
@@ -22,7 +22,7 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
     /// NFT variables
     ///
 
-    IWordList public wordList;
+    IWordListVRF public wordList;
 
     uint256 private tokenIdCounter = 0;
 
@@ -101,11 +101,29 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
         CCIP_BnM.approve(_ccipRouter, type(uint256).max);
     }
 
+    // function mintWords() public {
+    //     if (mintedWords[msg.sender].length > 0) revert AlreadyMintedWords();
+
+    //     (string[] memory words, ) = wordList.requestWordsFromBank();
+    //     mintedWords[msg.sender] = words;
+    // }
+
     function mintWords() public {
         if (mintedWords[msg.sender].length > 0) revert AlreadyMintedWords();
 
-        (string[] memory words, ) = wordList.requestWordsFromBank();
-        mintedWords[msg.sender] = words;
+        wordList.requestRandomWordFromBank(msg.sender);
+    }
+
+    function fulfillMintWords(
+        address user,
+        string[] memory words
+    ) public {
+        require(
+            msg.sender == address(wordList),
+            "NFT: Only WordList can fulfill mintWords"
+        );
+
+        mintedWords[user] = words;
     }
 
     function mint(
@@ -250,7 +268,7 @@ contract NFT is INFT, ERC721URIStorage, Ownable {
             "NFT: Connected WordList cannot be 0x0"
         );
 
-        wordList = IWordList(_wordList);
+        wordList = IWordListVRF(_wordList);
     }
 
     function setDestinationChainSelector(

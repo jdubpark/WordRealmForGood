@@ -11,7 +11,8 @@ abstract contract ScriptHelper is Script {
             address WETH,
             address LINK,
             address CCIP_BnM,
-            address ccipRouter
+            address ccipRouter,
+            address worldIdRouter
         )
     {
         if (block.chainid == 84531) {
@@ -24,6 +25,7 @@ abstract contract ScriptHelper is Script {
 
             // Routers
             ccipRouter = 0xA8C0c11bf64AF62CDCA6f93D3769B88BdD7cb93D;
+            worldIdRouter = 0x78eC127A3716D447F4575E9c834d452E397EE9E1;
         } else {
             console2.log("BaseSetup: chain id %d", block.chainid);
             revert("BaseSetup: unsupported chain ID");
