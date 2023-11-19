@@ -16,7 +16,7 @@ The Chainlink Automation is triggered when a disaster threshold for a parameter 
 
 ## Cross-Cultural Ties
 
-NFT holders are connected with members of the local region by a token-gated messaging group chat supported by Push Protocol. When disaster strikes, NFT holders are in direct contact with locals in the disaster stricken zone. This allows for real-time communication and coordination, directly from the NFT holders' MetaMask wallet connected by a MetaMask Snap.
+NFT holders are connected with members of the local region by a token-gated channel supported by Push Protocol. When disaster strikes, NFT holders are in direct contact with locals in the disaster stricken zone. This allows for real-time communication and coordination, directly from the NFT holders' MetaMask wallet connected by a MetaMask Snap. NFT holders can opt in and define what notifications they receive on an ongoing situation with disastrous weather conditions.
 
 ## Running the server
 
@@ -37,7 +37,7 @@ curl -X POST http://127.0.0.1:5000/process_string -H "Content-Type: application/
 
 ## How The Game Is Built
 
-We used Worldcoin IDKit to add anonomous action to the mint NFT action to WordRealm. Worldcoin integration was imperative to this project because funds generated from players are donated to local non-profit aid organizations--hence, proof of personhood is important to prevent sybil attacks that would render the game unplayable and donations fraudulent.
+We used Worldcoin IDKit to add anonymous action to the mint NFT action to WordRealm. Worldcoin integration was imperative to this project because funds generated from players are donated to local non-profit aid organizations--hence, proof of personhood is important to prevent sybil attacks that would render the game unplayable and donations fraudulent.
 
 The contract requests three random numbers from API3 QRNG by using the ```endpointIdUint256Array``` of the QRNG provider while making the request. This returns an array of three random numbers. These random numbers are then used as random indices to select from a larger list of words within respective cultural categories (in the Turkey example, the categories are landmarks, cuisine, and carpets). The user then selects words--these words are then passed to DALL-E to generate an image that is then stored on IPFS through NFT.storage.
 
