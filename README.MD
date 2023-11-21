@@ -4,6 +4,10 @@
 
 Disaster relief funding pre-emptively distributed to local aid organisations based on a trigger of imminent disastrous weather (hurricane or strong winds) -- all funded by educational, free-to-play generative NFT gaming.
 
+## Demo
+
+Check out the [demo here](https://youtu.be/4kVkL8W3j-o)!
+
 ## Player Experience
 
 A Player is presented with a random selection of words, through API3 QRNG, organized into three categories popular in their local region, Turkey: Landmarks, Cuisine, and Carpets. Player selects words that teach them about cultural elements from the local region -- the selected words are then used to create a sentence portayed a turkish cat eating the cuisine selected on a flying version of the carpet selected inside the landmark selected. This sentence is passed through DALL-E to generate an NFT that portrays the sentence constructed by the Player. This image is stored in decentralized manner on IPFS through NFT.Storage. Nouns NFT art and style is featured prominently -- given the game exists to fund public goods in a whimsical, cryptographic method, there is no art more fitting than Nouns. The player can choose to mint the NFT whose proceeds are then sent to a disaster relief contract on Base Goerli. Player can choose to sell the NFT -- proceeds from royalties are sent to the same disaster relief contract on Base Goerli. To allow only human players to experience the game, the app uses Worldcoin's anonymous actions for the action of minting an NFT.
